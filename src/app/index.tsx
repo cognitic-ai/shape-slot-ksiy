@@ -111,7 +111,7 @@ export default function IndexRoute() {
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
         style={{ flex: 1 }}
-        contentContainerStyle={{ paddingBottom: 40 }}
+        contentContainerStyle={{ paddingBottom: 40, alignItems: "center" }}
       >
         {/* Header */}
         <View
@@ -155,7 +155,7 @@ export default function IndexRoute() {
 
         {/* Categories */}
         {categories.map((category) => (
-          <View key={category.name} style={{ marginBottom: 32 }}>
+          <View key={category.name} style={{ marginBottom: 32, width: "100%", maxWidth: 800 }}>
             {/* Category Header */}
             <View
               style={{
