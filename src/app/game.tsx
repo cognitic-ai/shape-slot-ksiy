@@ -277,6 +277,7 @@ export default function GameRoute() {
   const [draggedShapeId, setDraggedShapeId] = useState<string | null>(null);
   const [completedCount, setCompletedCount] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const confettiRef = useRef<any>(null);
 
   useEffect(() => {
@@ -299,6 +300,10 @@ export default function GameRoute() {
       if (confettiRef.current) {
         confettiRef.current.start();
       }
+      // Show modal after a delay to let confetti play
+      setTimeout(() => {
+        setShowModal(true);
+      }, 1500);
     }
   }, [shapes, isComplete]);
 
@@ -381,6 +386,7 @@ export default function GameRoute() {
     const newShapes = generateLevel(parseInt(level || "1"), width, gameHeight);
     setShapes(newShapes);
     setIsComplete(false);
+    setShowModal(false);
     setCompletedCount(0);
   };
 
@@ -483,7 +489,7 @@ export default function GameRoute() {
         />
 
         {/* Completion Modal */}
-        {isComplete && (
+        {showModal && (
           <View
             style={{
               position: "absolute",
@@ -494,6 +500,7 @@ export default function GameRoute() {
               backgroundColor: "rgba(0, 0, 0, 0.7)",
               justifyContent: "center",
               alignItems: "center",
+              zIndex: 10000,
             }}
           >
             <View

@@ -12,25 +12,31 @@ function generateLevels() {
   for (let i = 1; i <= 100; i++) {
     let category = "";
     let shapes = 0;
+    let shapeTypes = 3;
 
     if (i <= 10) {
       category = "Tiny Treasures";
       shapes = 2 + i;
+      shapeTypes = 3;
     } else if (i <= 25) {
       category = "Cozy Corner";
       shapes = 12 + Math.floor((i - 10) * 0.8);
+      shapeTypes = 3;
     } else if (i <= 50) {
       category = "Neat Freak";
       shapes = 24 + Math.floor((i - 25) * 0.6);
+      shapeTypes = Math.min(4 + Math.floor((i - 25) / 10), 6);
     } else if (i <= 75) {
       category = "Order Master";
       shapes = 39 + Math.floor((i - 50) * 0.5);
+      shapeTypes = Math.min(6 + Math.floor((i - 50) / 10), 8);
     } else {
       category = "Zen Legend";
       shapes = 52 + Math.floor((i - 75) * 0.4);
+      shapeTypes = 8;
     }
 
-    levels.push({ level: i, category, shapes });
+    levels.push({ level: i, category, shapes, shapeTypes });
   }
   return levels;
 }
@@ -188,14 +194,12 @@ export default function IndexRoute() {
               </View>
             </View>
 
-            {/* Level Grid */}
+            {/* Level List */}
             <View
               style={{
                 paddingHorizontal: 24,
                 paddingTop: 16,
-                flexDirection: "row",
-                flexWrap: "wrap",
-                gap: 10,
+                gap: 12,
               }}
             >
               {category.levels.map((levelData) => {
@@ -215,8 +219,6 @@ export default function IndexRoute() {
                     <Pressable
                       disabled={!unlocked}
                       style={({ pressed }) => ({
-                        width: "18%",
-                        aspectRatio: 1,
                         backgroundColor: unlocked
                           ? isDark
                             ? "#1a1a1a"
@@ -224,64 +226,116 @@ export default function IndexRoute() {
                           : isDark
                           ? "#0f0f0f"
                           : "#f0f0f0",
-                        borderRadius: 16,
+                        borderRadius: 20,
                         borderCurve: "continuous",
-                        justifyContent: "center",
+                        padding: 20,
+                        flexDirection: "row",
                         alignItems: "center",
-                        opacity: unlocked ? (pressed ? 0.6 : 1) : 0.4,
+                        justifyContent: "space-between",
+                        opacity: unlocked ? (pressed ? 0.7 : 1) : 0.5,
                         shadowColor: "#000",
                         shadowOffset: { width: 0, height: 2 },
-                        shadowOpacity: unlocked ? (isDark ? 0.3 : 0.08) : 0,
-                        shadowRadius: 4,
-                        borderWidth: 2,
+                        shadowOpacity: unlocked ? (isDark ? 0.3 : 0.1) : 0,
+                        shadowRadius: 8,
+                        borderWidth: completed ? 3 : 2,
                         borderColor: completed
-                          ? category.color[0]
+                          ? "#6BCF7F"
                           : pressed && unlocked
                           ? category.color[0]
                           : "transparent",
-                        position: "relative",
                       })}
                     >
-                      {completed && (
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
                         <View
                           style={{
-                            position: "absolute",
-                            top: 4,
-                            right: 4,
-                            backgroundColor: category.color[0],
-                            borderRadius: 10,
-                            width: 20,
-                            height: 20,
+                            width: 50,
+                            height: 50,
+                            borderRadius: 16,
+                            borderCurve: "continuous",
+                            backgroundColor: unlocked
+                              ? category.color[0] + "20"
+                              : isDark
+                              ? "#0a0a0a"
+                              : "#e0e0e0",
                             justifyContent: "center",
                             alignItems: "center",
                           }}
                         >
-                          <Text style={{ color: "#ffffff", fontSize: 12, fontWeight: "700" }}>
-                            ✓
-                          </Text>
+                          {completed ? (
+                            <Text style={{ fontSize: 24, color: "#6BCF7F" }}>✓</Text>
+                          ) : (
+                            <Text
+                              style={{
+                                fontSize: 20,
+                                fontWeight: "700",
+                                color: unlocked ? category.color[0] : isDark ? "#404040" : "#c0c0c0",
+                                fontVariant: ["tabular-nums"],
+                              }}
+                            >
+                              {unlocked ? levelData.level : "🔒"}
+                            </Text>
+                          )}
                         </View>
-                      )}
-                      <Text
-                        style={{
-                          fontSize: 18,
-                          fontWeight: "700",
-                          color: unlocked ? category.color[0] : isDark ? "#404040" : "#c0c0c0",
-                          fontVariant: ["tabular-nums"],
-                        }}
-                      >
-                        {unlocked ? levelData.level : "🔒"}
-                      </Text>
-                      {unlocked && (
-                        <Text
+                        <View style={{ gap: 4 }}>
+                          <Text
+                            style={{
+                              fontSize: 18,
+                              fontWeight: "700",
+                              color: unlocked
+                                ? isDark
+                                  ? "#ffffff"
+                                  : "#1a1a1a"
+                                : isDark
+                                ? "#404040"
+                                : "#c0c0c0",
+                            }}
+                          >
+                            Level {levelData.level}
+                          </Text>
+                          {unlocked && (
+                            <View style={{ flexDirection: "row", gap: 12 }}>
+                              <Text
+                                style={{
+                                  fontSize: 13,
+                                  color: isDark ? "#808080" : "#888888",
+                                  fontVariant: ["tabular-nums"],
+                                }}
+                              >
+                                {levelData.shapes} bits
+                              </Text>
+                              <Text
+                                style={{
+                                  fontSize: 13,
+                                  color: isDark ? "#808080" : "#888888",
+                                  fontVariant: ["tabular-nums"],
+                                }}
+                              >
+                                {levelData.shapeTypes} shapes
+                              </Text>
+                            </View>
+                          )}
+                        </View>
+                      </View>
+                      {unlocked && !completed && (
+                        <View
                           style={{
-                            fontSize: 10,
-                            color: isDark ? "#808080" : "#888888",
-                            marginTop: 2,
-                            fontVariant: ["tabular-nums"],
+                            paddingHorizontal: 16,
+                            paddingVertical: 8,
+                            borderRadius: 12,
+                            borderCurve: "continuous",
+                            backgroundColor: category.color[0] + "20",
                           }}
                         >
-                          {levelData.shapes}
-                        </Text>
+                          <Text
+                            style={{
+                              fontSize: 14,
+                              fontWeight: "600",
+                              color: category.color[0],
+                            }}
+                          >
+                            Play
+                          </Text>
+                        </View>
                       )}
                     </Pressable>
                   </Link>
