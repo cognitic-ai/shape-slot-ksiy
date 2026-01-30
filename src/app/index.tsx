@@ -315,7 +315,6 @@ export default function IndexRoute() {
                             </View>
                           )}
                         </View>
-                      </View>
                       {unlocked && !completed && (
                         <View
                           style={{
@@ -337,6 +336,7 @@ export default function IndexRoute() {
                           </Text>
                         </View>
                       )}
+                      </View>
                     </Pressable>
                   </Link>
                 );

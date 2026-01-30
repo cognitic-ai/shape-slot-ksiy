@@ -2,7 +2,7 @@ import { View, Text, useWindowDimensions, Pressable } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColorScheme } from "react-native";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, memo, useCallback } from "react";
 import { GestureHandlerRootView, GestureDetector, Gesture } from "react-native-gesture-handler";
 import Animated, {
   useSharedValue,
@@ -133,25 +133,28 @@ function ShapeComponent({
   const offsetY = useSharedValue(0);
 
   useEffect(() => {
-    translateX.value = withSpring(shape.currentX, springConfig);
-    translateY.value = withSpring(shape.currentY, springConfig);
+    translateX.value = withTiming(shape.currentX, { duration: 300 });
+    translateY.value = withTiming(shape.currentY, { duration: 300 });
   }, [shape.currentX, shape.currentY]);
 
   const gesture = Gesture.Pan()
     .enabled(!isGameComplete)
     .onStart(() => {
+      'worklet';
       offsetX.value = translateX.value;
       offsetY.value = translateY.value;
-      scale.value = withSpring(1.1);
+      scale.value = withTiming(1.1, { duration: 100 });
       runOnJS(onDragStart)(shape.id);
       runOnJS(Haptics.impactAsync)(Haptics.ImpactFeedbackStyle.Light);
     })
     .onUpdate((event) => {
+      'worklet';
       translateX.value = offsetX.value + event.translationX;
       translateY.value = offsetY.value + event.translationY;
     })
     .onEnd(() => {
-      scale.value = withSpring(1);
+      'worklet';
+      scale.value = withTiming(1, { duration: 100 });
       const finalX = translateX.value;
       const finalY = translateY.value;
 
@@ -219,6 +222,16 @@ function ShapeComponent({
   );
 }
 
+const MemoizedShapeComponent = memo(ShapeComponent, (prevProps, nextProps) => {
+  return (
+    prevProps.shape.currentX === nextProps.shape.currentX &&
+    prevProps.shape.currentY === nextProps.shape.currentY &&
+    prevProps.shape.isPlaced === nextProps.shape.isPlaced &&
+    prevProps.zIndex === nextProps.zIndex &&
+    prevProps.isGameComplete === nextProps.isGameComplete
+  );
+});
+
 function SlotComponent({ shape }: { shape: Shape }) {
   const baseStyle = {
     position: "absolute" as const,
@@ -267,6 +280,8 @@ function SlotComponent({ shape }: { shape: Shape }) {
     />
   );
 }
+
+const MemoizedSlotComponent = memo(SlotComponent);
 
 export default function GameRoute() {
   const { level } = useLocalSearchParams<{ level: string }>();
@@ -323,17 +338,17 @@ export default function GameRoute() {
     }
   };
 
-  const playSound = async () => {
+  const playSound = useCallback(async () => {
     // Sound removed due to module compatibility - haptic feedback provides tactile response
-  };
+  }, []);
 
-  const handlePositionUpdate = (id: string, x: number, y: number) => {
+  const handlePositionUpdate = useCallback((id: string, x: number, y: number) => {
     setShapes((prev) =>
       prev.map((s) => (s.id === id ? { ...s, currentX: x, currentY: y } : s))
     );
-  };
+  }, []);
 
-  const handleSnapToSlot = (id: string) => {
+  const handleSnapToSlot = useCallback((id: string) => {
     playSound();
 
     setShapes((prev) => {
@@ -366,14 +381,14 @@ export default function GameRoute() {
         return s;
       });
     });
-  };
+  }, [playSound]);
 
-  const handleDragStart = (id: string) => {
+  const handleDragStart = useCallback((id: string) => {
     setDraggedShapeId(id);
     setShapes((prev) =>
       prev.map((s) => (s.id === id ? { ...s, isPlaced: false } : s))
     );
-  };
+  }, []);
 
   const handleNextLevel = () => {
     const nextLevel = parseInt(level || "1") + 1;
@@ -463,12 +478,12 @@ export default function GameRoute() {
         <View style={{ flex: 1, position: "relative" }}>
           {/* Slots */}
           {shapes.map((shape) => (
-            <SlotComponent key={`slot-${shape.id}`} shape={shape} />
+            <MemoizedSlotComponent key={`slot-${shape.id}`} shape={shape} />
           ))}
 
           {/* Shapes */}
           {shapes.map((shape, index) => (
-            <ShapeComponent
+            <MemoizedShapeComponent
               key={shape.id}
               shape={shape}
               onPositionUpdate={handlePositionUpdate}
