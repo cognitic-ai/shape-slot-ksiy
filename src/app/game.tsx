@@ -14,7 +14,7 @@ import Animated, {
 import * as Haptics from "expo-haptics";
 import { Audio } from "expo-av";
 
-type ShapeType = "circle" | "rectangle" | "hexagon";
+type ShapeType = "circle" | "rectangle" | "hexagon" | "triangle" | "diamond" | "star" | "pentagon" | "octagon";
 
 interface Shape {
   id: string;
@@ -29,18 +29,10 @@ interface Shape {
 }
 
 const COLORS = [
-  "#FF6B9D", // soft pink
-  "#C44569", // coral
-  "#FFA07A", // light salmon
-  "#98D8C8", // mint
-  "#6BCF7F", // soft green
-  "#A8E6CF", // pale green
-  "#FFD93D", // soft yellow
-  "#95E1D3", // turquoise
-  "#B4A7D6", // lavender
-  "#F8B195", // peach
-  "#89CFF0", // baby blue
-  "#F6C6EA", // pastel pink
+  "#FF6B9D", "#C44569", "#FFA07A", "#98D8C8", "#6BCF7F", "#A8E6CF",
+  "#FFD93D", "#95E1D3", "#B4A7D6", "#F8B195", "#89CFF0", "#F6C6EA",
+  "#FF8B94", "#A8E6CF", "#FFD3B6", "#FFAAA5", "#FF8C94", "#C7CEEA",
+  "#FFDAC1", "#B5EAD7", "#E2F0CB", "#C7CEEA", "#FFB7B2", "#FFDFD3",
 ];
 
 const springConfig = {
@@ -58,39 +50,33 @@ function generateLevel(level: number, width: number, height: number): Shape[] {
   let shapeCount: number;
   let baseSize: number;
 
-  switch (level) {
-    case 1:
-      shapeCount = 3;
-      baseSize = 80;
-      break;
-    case 2:
-      shapeCount = 5;
-      baseSize = 70;
-      break;
-    case 3:
-      shapeCount = 8;
-      baseSize = 60;
-      break;
-    case 4:
-      shapeCount = 12;
-      baseSize = 50;
-      break;
-    case 5:
-      shapeCount = 16;
-      baseSize = 45;
-      break;
-    default:
-      shapeCount = 3;
-      baseSize = 80;
+  // Progressive difficulty scaling
+  if (level <= 10) {
+    shapeCount = 2 + level;
+    baseSize = Math.max(45, 85 - level * 3);
+  } else if (level <= 25) {
+    shapeCount = 12 + Math.floor((level - 10) * 0.8);
+    baseSize = Math.max(35, 55 - (level - 10) * 1);
+  } else if (level <= 50) {
+    shapeCount = 24 + Math.floor((level - 25) * 0.6);
+    baseSize = Math.max(30, 45 - (level - 25) * 0.3);
+  } else if (level <= 75) {
+    shapeCount = 39 + Math.floor((level - 50) * 0.5);
+    baseSize = Math.max(25, 38 - (level - 50) * 0.2);
+  } else {
+    shapeCount = 52 + Math.floor((level - 75) * 0.4);
+    baseSize = Math.max(22, 32 - (level - 75) * 0.15);
   }
 
-  const types: ShapeType[] = ["circle", "rectangle", "hexagon"];
-  const padding = 80;
+  const types: ShapeType[] = ["circle", "rectangle", "hexagon", "triangle", "diamond", "star", "pentagon", "octagon"];
+  const availableTypes = types.slice(0, Math.min(3 + Math.floor(level / 15), types.length));
+
+  const padding = 60;
   const usableWidth = width - padding * 2;
   const usableHeight = height - padding * 2;
 
   // Generate slot positions in a grid
-  const cols = Math.ceil(Math.sqrt(shapeCount));
+  const cols = Math.ceil(Math.sqrt(shapeCount * 1.2));
   const rows = Math.ceil(shapeCount / cols);
   const cellWidth = usableWidth / cols;
   const cellHeight = usableHeight / rows;
@@ -108,7 +94,7 @@ function generateLevel(level: number, width: number, height: number): Shape[] {
 
     shapes.push({
       id: `shape-${i}`,
-      type: types[i % types.length],
+      type: availableTypes[i % availableTypes.length],
       color: COLORS[i % COLORS.length],
       size: baseSize,
       slotX,
@@ -202,50 +188,27 @@ function ShapeComponent({
 
     switch (shape.type) {
       case "circle":
-        return (
-          <View
-            style={{
-              ...baseStyle,
-              borderRadius: shape.size / 2,
-            }}
-          />
-        );
+        return <View style={{ ...baseStyle, borderRadius: shape.size / 2 }} />;
       case "rectangle":
-        return (
-          <View
-            style={{
-              ...baseStyle,
-              borderRadius: 20,
-              borderCurve: "continuous",
-            }}
-          />
-        );
+        return <View style={{ ...baseStyle, borderRadius: 20, borderCurve: "continuous" }} />;
       case "hexagon":
-        // Simplified hexagon using borderRadius
-        return (
-          <View
-            style={{
-              ...baseStyle,
-              borderRadius: 16,
-              borderCurve: "continuous",
-              transform: [{ rotate: "30deg" }],
-            }}
-          />
-        );
+        return <View style={{ ...baseStyle, borderRadius: 16, borderCurve: "continuous", transform: [{ rotate: "30deg" }] }} />;
+      case "triangle":
+        return <View style={{ ...baseStyle, borderRadius: 12, borderCurve: "continuous", transform: [{ rotate: "45deg" }] }} />;
+      case "diamond":
+        return <View style={{ ...baseStyle, borderRadius: 8, borderCurve: "continuous", transform: [{ rotate: "45deg" }] }} />;
+      case "star":
+        return <View style={{ ...baseStyle, borderRadius: 14, borderCurve: "continuous", transform: [{ rotate: "22.5deg" }] }} />;
+      case "pentagon":
+        return <View style={{ ...baseStyle, borderRadius: 18, borderCurve: "continuous", transform: [{ rotate: "36deg" }] }} />;
+      case "octagon":
+        return <View style={{ ...baseStyle, borderRadius: 10, borderCurve: "continuous", transform: [{ rotate: "22.5deg" }] }} />;
     }
   };
 
   return (
     <GestureDetector gesture={gesture}>
-      <Animated.View
-        style={[
-          {
-            position: "absolute",
-            zIndex,
-          },
-          animatedStyle,
-        ]}
-      >
+      <Animated.View style={[{ position: "absolute", zIndex }, animatedStyle]}>
         {renderShape()}
       </Animated.View>
     </GestureDetector>
@@ -264,31 +227,41 @@ function SlotComponent({ shape }: { shape: Shape }) {
     borderStyle: "dashed" as const,
   };
 
-  switch (shape.type) {
-    case "circle":
-      return <View style={{ ...baseStyle, borderRadius: shape.size / 2 }} />;
-    case "rectangle":
-      return (
-        <View
-          style={{
-            ...baseStyle,
-            borderRadius: 20,
-            borderCurve: "continuous",
-          }}
-        />
-      );
-    case "hexagon":
-      return (
-        <View
-          style={{
-            ...baseStyle,
-            borderRadius: 16,
-            borderCurve: "continuous",
-            transform: [{ rotate: "30deg" }],
-          }}
-        />
-      );
-  }
+  const getRotation = () => {
+    switch (shape.type) {
+      case "hexagon": return "30deg";
+      case "triangle": return "45deg";
+      case "diamond": return "45deg";
+      case "star": return "22.5deg";
+      case "pentagon": return "36deg";
+      case "octagon": return "22.5deg";
+      default: return "0deg";
+    }
+  };
+
+  const getBorderRadius = () => {
+    switch (shape.type) {
+      case "circle": return shape.size / 2;
+      case "rectangle": return 20;
+      case "hexagon": return 16;
+      case "triangle": return 12;
+      case "diamond": return 8;
+      case "star": return 14;
+      case "pentagon": return 18;
+      case "octagon": return 10;
+    }
+  };
+
+  return (
+    <View
+      style={{
+        ...baseStyle,
+        borderRadius: getBorderRadius(),
+        borderCurve: "continuous",
+        transform: [{ rotate: getRotation() }],
+      }}
+    />
+  );
 }
 
 export default function GameRoute() {
@@ -309,6 +282,8 @@ export default function GameRoute() {
     const gameHeight = height - insets.top - insets.bottom - 100;
     const initialShapes = generateLevel(parseInt(level || "1"), width, gameHeight);
     setShapes(initialShapes);
+    setIsComplete(false);
+    setCompletedCount(0);
 
     // Load sound
     loadSound();
@@ -332,7 +307,6 @@ export default function GameRoute() {
 
   const loadSound = async () => {
     try {
-      // Create a simple sound using Audio
       const { sound } = await Audio.Sound.createAsync(
         { uri: "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=" },
         { shouldPlay: false }
@@ -403,11 +377,10 @@ export default function GameRoute() {
 
   const handleNextLevel = () => {
     const nextLevel = parseInt(level || "1") + 1;
-    if (nextLevel <= 5) {
-      router.replace({ pathname: "/game", params: { level: nextLevel } });
-      setIsComplete(false);
+    if (nextLevel <= 100) {
+      router.push({ pathname: "/game", params: { level: nextLevel } });
     } else {
-      router.back();
+      router.push("/");
     }
   };
 
@@ -417,6 +390,10 @@ export default function GameRoute() {
     setShapes(newShapes);
     setIsComplete(false);
     setCompletedCount(0);
+  };
+
+  const handleHome = () => {
+    router.push("/");
   };
 
   const gameHeight = height - insets.top - insets.bottom - 100;
@@ -447,12 +424,7 @@ export default function GameRoute() {
               opacity: pressed ? 0.5 : 1,
             })}
           >
-            <Text
-              style={{
-                fontSize: 16,
-                color: isDark ? "#ffffff" : "#1a1a1a",
-              }}
-            >
+            <Text style={{ fontSize: 16, color: isDark ? "#ffffff" : "#1a1a1a" }}>
               ← Back
             </Text>
           </Pressable>
@@ -487,12 +459,7 @@ export default function GameRoute() {
         </View>
 
         {/* Game Area */}
-        <View
-          style={{
-            flex: 1,
-            position: "relative",
-          }}
-        >
+        <View style={{ flex: 1, position: "relative" }}>
           {/* Slots */}
           {shapes.map((shape) => (
             <SlotComponent key={`slot-${shape.id}`} shape={shape} />
@@ -549,7 +516,28 @@ export default function GameRoute() {
               >
                 Level Complete!
               </Text>
-              <View style={{ flexDirection: "row", gap: 12 }}>
+              <View style={{ flexDirection: "row", gap: 12, flexWrap: "wrap", justifyContent: "center" }}>
+                <Pressable
+                  onPress={handleHome}
+                  style={({ pressed }) => ({
+                    backgroundColor: isDark ? "#2a2a2a" : "#f0f0f0",
+                    paddingHorizontal: 24,
+                    paddingVertical: 14,
+                    borderRadius: 16,
+                    borderCurve: "continuous",
+                    opacity: pressed ? 0.7 : 1,
+                  })}
+                >
+                  <Text
+                    style={{
+                      fontSize: 16,
+                      fontWeight: "600",
+                      color: isDark ? "#ffffff" : "#1a1a1a",
+                    }}
+                  >
+                    Home
+                  </Text>
+                </Pressable>
                 <Pressable
                   onPress={handleRestart}
                   style={({ pressed }) => ({
@@ -589,7 +577,7 @@ export default function GameRoute() {
                       color: "#ffffff",
                     }}
                   >
-                    {parseInt(level || "1") === 5 ? "Finish" : "Next Level"}
+                    {parseInt(level || "1") === 100 ? "Finish" : "Next Level"}
                   </Text>
                 </Pressable>
               </View>

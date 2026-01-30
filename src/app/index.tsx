@@ -1,23 +1,73 @@
-import { View, Text, Pressable, useWindowDimensions } from "react-native";
-import { useState } from "react";
+import { View, Text, Pressable, ScrollView } from "react-native";
 import { Link } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColorScheme } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
 
-const LEVELS = [
-  { level: 1, shapes: 3, title: "Gentle Start" },
-  { level: 2, shapes: 5, title: "Getting Cozy" },
-  { level: 3, shapes: 8, title: "Finding Peace" },
-  { level: 4, shapes: 12, title: "Deep Focus" },
-  { level: 5, shapes: 16, title: "Zen Master" },
-];
+function generateLevels() {
+  const levels = [];
+  for (let i = 1; i <= 100; i++) {
+    let category = "";
+    let shapes = 0;
+
+    if (i <= 10) {
+      category = "Beginner";
+      shapes = 2 + i;
+    } else if (i <= 25) {
+      category = "Easy";
+      shapes = 12 + Math.floor((i - 10) * 0.8);
+    } else if (i <= 50) {
+      category = "Medium";
+      shapes = 24 + Math.floor((i - 25) * 0.6);
+    } else if (i <= 75) {
+      category = "Hard";
+      shapes = 39 + Math.floor((i - 50) * 0.5);
+    } else {
+      category = "Expert";
+      shapes = 52 + Math.floor((i - 75) * 0.4);
+    }
+
+    levels.push({ level: i, category, shapes });
+  }
+  return levels;
+}
+
+const LEVELS = generateLevels();
+
+const CATEGORY_COLORS = {
+  Beginner: { light: "#6BCF7F", dark: "#5AB56E", bg: "#E8F8ED" },
+  Easy: "#89CFF0",
+  Medium: "#FFD93D",
+  Hard: "#FFA07A",
+  Expert: "#FF6B9D",
+};
+
+const CATEGORY_GRADIENTS = {
+  Beginner: ["#6BCF7F", "#98D8C8"],
+  Easy: ["#89CFF0", "#A8E6CF"],
+  Medium: ["#FFD93D", "#F8B195"],
+  Hard: ["#FFA07A", "#FF8B94"],
+  Expert: ["#FF6B9D", "#B4A7D6"],
+};
 
 export default function IndexRoute() {
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
   const scheme = useColorScheme();
   const isDark = scheme === "dark";
+
+  // Group levels by category
+  const beginnerLevels = LEVELS.filter((l) => l.category === "Beginner");
+  const easyLevels = LEVELS.filter((l) => l.category === "Easy");
+  const mediumLevels = LEVELS.filter((l) => l.category === "Medium");
+  const hardLevels = LEVELS.filter((l) => l.category === "Hard");
+  const expertLevels = LEVELS.filter((l) => l.category === "Expert");
+
+  const categories = [
+    { name: "Beginner", levels: beginnerLevels, color: CATEGORY_GRADIENTS.Beginner },
+    { name: "Easy", levels: easyLevels, color: CATEGORY_GRADIENTS.Easy },
+    { name: "Medium", levels: mediumLevels, color: CATEGORY_GRADIENTS.Medium },
+    { name: "Hard", levels: hardLevels, color: CATEGORY_GRADIENTS.Hard },
+    { name: "Expert", levels: expertLevels, color: CATEGORY_GRADIENTS.Expert },
+  ];
 
   return (
     <View
@@ -28,112 +78,156 @@ export default function IndexRoute() {
         paddingBottom: insets.bottom,
       }}
     >
-      <View
-        style={{
-          flex: 1,
-          padding: 24,
-          paddingTop: 60,
-          alignItems: "center",
-        }}
+      <ScrollView
+        contentInsetAdjustmentBehavior="automatic"
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: 40 }}
       >
-        <Text
-          style={{
-            fontSize: 48,
-            fontWeight: "700",
-            color: isDark ? "#ffffff" : "#1a1a1a",
-            marginBottom: 8,
-            letterSpacing: -1,
-          }}
-        >
-          Tidy
-        </Text>
-        <Text
-          style={{
-            fontSize: 18,
-            color: isDark ? "#a0a0a0" : "#666666",
-            marginBottom: 48,
-            fontWeight: "400",
-          }}
-        >
-          A calming puzzle game
-        </Text>
-
+        {/* Header */}
         <View
           style={{
-            gap: 16,
-            width: "100%",
-            maxWidth: 400,
+            padding: 24,
+            paddingTop: 40,
+            alignItems: "center",
           }}
         >
-          {LEVELS.map((levelData) => (
-            <Link
-              key={levelData.level}
-              href={{
-                pathname: "/game",
-                params: { level: levelData.level },
+          <Text
+            style={{
+              fontSize: 48,
+              fontWeight: "700",
+              color: isDark ? "#ffffff" : "#1a1a1a",
+              marginBottom: 8,
+              letterSpacing: -1,
+            }}
+          >
+            Tidy
+          </Text>
+          <Text
+            style={{
+              fontSize: 18,
+              color: isDark ? "#a0a0a0" : "#666666",
+              marginBottom: 8,
+              fontWeight: "400",
+            }}
+          >
+            A calming puzzle game
+          </Text>
+          <Text
+            style={{
+              fontSize: 14,
+              color: isDark ? "#808080" : "#888888",
+              fontVariant: ["tabular-nums"],
+            }}
+          >
+            100 levels of zen
+          </Text>
+        </View>
+
+        {/* Categories */}
+        {categories.map((category) => (
+          <View key={category.name} style={{ marginBottom: 32 }}>
+            {/* Category Header */}
+            <View
+              style={{
+                paddingHorizontal: 24,
+                paddingVertical: 12,
+                backgroundColor: isDark ? "#151515" : "#ffffff",
+                borderLeftWidth: 4,
+                borderLeftColor: category.color[0],
               }}
-              asChild
             >
-              <Pressable
-                style={({ pressed }) => ({
-                  backgroundColor: isDark ? "#1a1a1a" : "#ffffff",
-                  padding: 20,
-                  borderRadius: 20,
-                  borderCurve: "continuous",
+              <View
+                style={{
                   flexDirection: "row",
                   justifyContent: "space-between",
                   alignItems: "center",
-                  opacity: pressed ? 0.7 : 1,
-                  shadowColor: "#000",
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: isDark ? 0.3 : 0.1,
-                  shadowRadius: 8,
-                })}
+                }}
               >
-                <View style={{ gap: 4 }}>
-                  <Text
-                    style={{
-                      fontSize: 20,
-                      fontWeight: "600",
-                      color: isDark ? "#ffffff" : "#1a1a1a",
-                    }}
-                  >
-                    Level {levelData.level}
-                  </Text>
-                  <Text
-                    style={{
-                      fontSize: 15,
-                      color: isDark ? "#808080" : "#888888",
-                    }}
-                  >
-                    {levelData.title}
-                  </Text>
-                </View>
-                <View
+                <Text
                   style={{
-                    backgroundColor: isDark ? "#2a2a2a" : "#f0f0f0",
-                    paddingHorizontal: 12,
-                    paddingVertical: 6,
-                    borderRadius: 12,
-                    borderCurve: "continuous",
+                    fontSize: 20,
+                    fontWeight: "700",
+                    color: isDark ? "#ffffff" : "#1a1a1a",
                   }}
                 >
-                  <Text
-                    style={{
-                      fontSize: 13,
-                      color: isDark ? "#a0a0a0" : "#666666",
-                      fontWeight: "500",
-                      fontVariant: ["tabular-nums"],
-                    }}
+                  {category.name}
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 14,
+                    color: isDark ? "#808080" : "#888888",
+                    fontVariant: ["tabular-nums"],
+                  }}
+                >
+                  Levels {category.levels[0].level}-{category.levels[category.levels.length - 1].level}
+                </Text>
+              </View>
+            </View>
+
+            {/* Level Grid */}
+            <View
+              style={{
+                paddingHorizontal: 24,
+                paddingTop: 16,
+                flexDirection: "row",
+                flexWrap: "wrap",
+                gap: 10,
+              }}
+            >
+              {category.levels.map((levelData) => (
+                <Link
+                  key={levelData.level}
+                  href={{
+                    pathname: "/game",
+                    params: { level: levelData.level },
+                  }}
+                  asChild
+                >
+                  <Pressable
+                    style={({ pressed }) => ({
+                      width: "18%",
+                      aspectRatio: 1,
+                      backgroundColor: isDark ? "#1a1a1a" : "#ffffff",
+                      borderRadius: 16,
+                      borderCurve: "continuous",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      opacity: pressed ? 0.6 : 1,
+                      shadowColor: "#000",
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: isDark ? 0.3 : 0.08,
+                      shadowRadius: 4,
+                      borderWidth: 2,
+                      borderColor: pressed ? category.color[0] : "transparent",
+                    })}
                   >
-                    {levelData.shapes} shapes
-                  </Text>
-                </View>
-              </Pressable>
-            </Link>
-          ))}
-        </View>
-      </View>
+                    <Text
+                      style={{
+                        fontSize: 18,
+                        fontWeight: "700",
+                        color: category.color[0],
+                        fontVariant: ["tabular-nums"],
+                      }}
+                    >
+                      {levelData.level}
+                    </Text>
+                    <Text
+                      style={{
+                        fontSize: 10,
+                        color: isDark ? "#808080" : "#888888",
+                        marginTop: 2,
+                        fontVariant: ["tabular-nums"],
+                      }}
+                    >
+                      {levelData.shapes}
+                    </Text>
+                  </Pressable>
+                </Link>
+              ))}
+            </View>
+          </View>
+        ))}
+      </ScrollView>
     </View>
   );
 }
