@@ -206,19 +206,11 @@ export default function IndexRoute() {
                 const unlocked = isLevelUnlocked(levelData.level);
                 const completed = isLevelCompleted(levelData.level);
 
-                return (
-                  <Link
+                const content = (
+                  <Pressable
                     key={levelData.level}
-                    href={{
-                      pathname: "/game",
-                      params: { level: levelData.level },
-                    }}
-                    asChild
                     disabled={!unlocked}
-                  >
-                    <Pressable
-                      disabled={!unlocked}
-                      style={({ pressed }) => ({
+                    style={({ pressed }) => ({
                         backgroundColor: unlocked
                           ? isDark
                             ? "#1a1a1a"
@@ -338,7 +330,21 @@ export default function IndexRoute() {
                       )}
                       </View>
                     </Pressable>
+                );
+
+                return unlocked ? (
+                  <Link
+                    key={levelData.level}
+                    href={{
+                      pathname: "/game",
+                      params: { level: levelData.level },
+                    }}
+                    asChild
+                  >
+                    {content}
                   </Link>
+                ) : (
+                  content
                 );
               })}
             </View>
