@@ -211,20 +211,14 @@ export default function IndexRoute() {
                     key={levelData.level}
                     disabled={!unlocked}
                     style={({ pressed }) => ({
-                        backgroundColor: unlocked
-                          ? isDark
-                            ? "#1a1a1a"
-                            : "#ffffff"
-                          : isDark
-                          ? "#0f0f0f"
-                          : "#f0f0f0",
+                        backgroundColor: isDark ? "#1a1a1a" : "#ffffff",
                         borderRadius: 20,
                         borderCurve: "continuous",
                         padding: 20,
                         flexDirection: "row",
                         alignItems: "center",
                         justifyContent: "space-between",
-                        opacity: unlocked ? (pressed ? 0.7 : 1) : 0.5,
+                        opacity: unlocked && pressed ? 0.7 : 1,
                         shadowColor: "#000",
                         shadowOffset: { width: 0, height: 2 },
                         shadowOpacity: unlocked ? (isDark ? 0.3 : 0.1) : 0,
