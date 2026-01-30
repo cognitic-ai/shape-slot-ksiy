@@ -2,7 +2,7 @@ import { View, Text, useWindowDimensions, Pressable } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColorScheme } from "react-native";
-import { useEffect, useState, useRef, memo, useCallback } from "react";
+import { useEffect, useState, useRef, memo, useCallback, useMemo } from "react";
 import { GestureHandlerRootView, GestureDetector, Gesture } from "react-native-gesture-handler";
 import Animated, {
   useSharedValue,
@@ -42,8 +42,8 @@ const springConfig = {
 };
 
 const snapSpringConfig = {
-  damping: 15,
-  stiffness: 200,
+  damping: 18,
+  stiffness: 250,
 };
 
 function generateLevel(level: number, width: number, height: number): Shape[] {
@@ -133,19 +133,19 @@ function ShapeComponent({
   const offsetY = useSharedValue(0);
 
   useEffect(() => {
-    translateX.value = withTiming(shape.currentX, { duration: 300 });
-    translateY.value = withTiming(shape.currentY, { duration: 300 });
+    translateX.value = withTiming(shape.currentX, { duration: 250 });
+    translateY.value = withTiming(shape.currentY, { duration: 250 });
   }, [shape.currentX, shape.currentY]);
 
   const gesture = Gesture.Pan()
     .enabled(!isGameComplete && !shape.isPlaced)
+    .activateAfterLongPress(50)
     .onStart(() => {
       'worklet';
       offsetX.value = translateX.value;
       offsetY.value = translateY.value;
-      scale.value = withTiming(1.1, { duration: 100 });
+      scale.value = withTiming(1.05, { duration: 80 });
       runOnJS(onDragStart)(shape.id);
-      runOnJS(Haptics.impactAsync)(Haptics.ImpactFeedbackStyle.Light);
     })
     .onUpdate((event) => {
       'worklet';
@@ -154,16 +154,16 @@ function ShapeComponent({
     })
     .onEnd(() => {
       'worklet';
-      scale.value = withTiming(1, { duration: 100 });
+      scale.value = withTiming(1, { duration: 80 });
       const finalX = translateX.value;
       const finalY = translateY.value;
 
       // Check if near slot
-      const distanceToSlot = Math.sqrt(
-        Math.pow(finalX - shape.slotX, 2) + Math.pow(finalY - shape.slotY, 2)
-      );
+      const dx = finalX - shape.slotX;
+      const dy = finalY - shape.slotY;
+      const distanceToSlot = dx * dx + dy * dy; // Skip sqrt for performance
 
-      if (distanceToSlot < 30) {
+      if (distanceToSlot < 900) { // 30 * 30 = 900
         // Snap to slot
         translateX.value = withSpring(shape.slotX, snapSpringConfig);
         translateY.value = withSpring(shape.slotY, snapSpringConfig);
@@ -182,7 +182,7 @@ function ShapeComponent({
     ],
   }));
 
-  const renderShape = () => {
+  const shapeStyle = useMemo(() => {
     const baseStyle = {
       width: shape.size,
       height: shape.size,
@@ -195,28 +195,30 @@ function ShapeComponent({
 
     switch (shape.type) {
       case "circle":
-        return <View style={{ ...baseStyle, borderRadius: shape.size / 2 }} />;
+        return { ...baseStyle, borderRadius: shape.size / 2 };
       case "rectangle":
-        return <View style={{ ...baseStyle, borderRadius: 20, borderCurve: "continuous" }} />;
+        return { ...baseStyle, borderRadius: 20, borderCurve: "continuous" as const };
       case "hexagon":
-        return <View style={{ ...baseStyle, borderRadius: 16, borderCurve: "continuous", transform: [{ rotate: "30deg" }] }} />;
+        return { ...baseStyle, borderRadius: 16, borderCurve: "continuous" as const, transform: [{ rotate: "30deg" }] };
       case "triangle":
-        return <View style={{ ...baseStyle, borderRadius: 12, borderCurve: "continuous", transform: [{ rotate: "45deg" }] }} />;
+        return { ...baseStyle, borderRadius: 12, borderCurve: "continuous" as const, transform: [{ rotate: "45deg" }] };
       case "diamond":
-        return <View style={{ ...baseStyle, borderRadius: 8, borderCurve: "continuous", transform: [{ rotate: "45deg" }] }} />;
+        return { ...baseStyle, borderRadius: 8, borderCurve: "continuous" as const, transform: [{ rotate: "45deg" }] };
       case "star":
-        return <View style={{ ...baseStyle, borderRadius: 14, borderCurve: "continuous", transform: [{ rotate: "22.5deg" }] }} />;
+        return { ...baseStyle, borderRadius: 14, borderCurve: "continuous" as const, transform: [{ rotate: "22.5deg" }] };
       case "pentagon":
-        return <View style={{ ...baseStyle, borderRadius: 18, borderCurve: "continuous", transform: [{ rotate: "36deg" }] }} />;
+        return { ...baseStyle, borderRadius: 18, borderCurve: "continuous" as const, transform: [{ rotate: "36deg" }] };
       case "octagon":
-        return <View style={{ ...baseStyle, borderRadius: 10, borderCurve: "continuous", transform: [{ rotate: "22.5deg" }] }} />;
+        return { ...baseStyle, borderRadius: 10, borderCurve: "continuous" as const, transform: [{ rotate: "22.5deg" }] };
+      default:
+        return baseStyle;
     }
-  };
+  }, [shape.type, shape.size, shape.color]);
 
   return (
     <GestureDetector gesture={gesture}>
       <Animated.View style={[{ position: "absolute", zIndex }, animatedStyle]}>
-        {renderShape()}
+        <View style={shapeStyle} />
       </Animated.View>
     </GestureDetector>
   );
