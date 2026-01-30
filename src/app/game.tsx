@@ -351,36 +351,14 @@ export default function GameRoute() {
   const handleSnapToSlot = useCallback((id: string) => {
     playSound();
 
-    setShapes((prev) => {
-      const newShapes = prev.map((s) => {
+    setShapes((prev) =>
+      prev.map((s) => {
         if (s.id === id) {
           return { ...s, currentX: s.slotX, currentY: s.slotY, isPlaced: true };
         }
         return s;
-      });
-
-      // Displace overlapping shapes
-      const snappedShape = newShapes.find((s) => s.id === id)!;
-      return newShapes.map((s) => {
-        if (s.id !== id && !s.isPlaced) {
-          const dx = s.currentX - snappedShape.slotX;
-          const dy = s.currentY - snappedShape.slotY;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-
-          if (distance < snappedShape.size * 1.2) {
-            // Displace this shape
-            const angle = Math.atan2(dy, dx);
-            const pushDistance = 60;
-            return {
-              ...s,
-              currentX: s.currentX + Math.cos(angle) * pushDistance,
-              currentY: s.currentY + Math.sin(angle) * pushDistance,
-            };
-          }
-        }
-        return s;
-      });
-    });
+      })
+    );
   }, [playSound]);
 
   const handleDragStart = useCallback((id: string) => {
