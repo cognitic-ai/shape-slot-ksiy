@@ -310,27 +310,6 @@ export default function IndexRoute() {
                           )}
                         </View>
                       </View>
-                      {unlocked && !completed && (
-                        <View
-                          style={{
-                            paddingHorizontal: 16,
-                            paddingVertical: 8,
-                            borderRadius: 12,
-                            borderCurve: "continuous",
-                            backgroundColor: category.color[0] + "20",
-                          }}
-                        >
-                          <Text
-                            style={{
-                              fontSize: 14,
-                              fontWeight: "600",
-                              color: category.color[0],
-                            }}
-                          >
-                            Play
-                          </Text>
-                        </View>
-                      )}
                     </Pressable>
                   </Link>
                 );
