@@ -207,29 +207,26 @@ export default function IndexRoute() {
                 const completed = isLevelCompleted(levelData.level);
 
                 const content = (
-                  <Pressable
+                  <View
                     key={levelData.level}
-                    disabled={!unlocked}
-                    style={({ pressed }) => ({
-                        backgroundColor: isDark ? "#1a1a1a" : "#ffffff",
-                        borderRadius: 20,
-                        borderCurve: "continuous",
-                        padding: 20,
-                        flexDirection: "row",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        opacity: unlocked && pressed ? 0.7 : 1,
-                        shadowColor: "#000",
-                        shadowOffset: { width: 0, height: 2 },
-                        shadowOpacity: unlocked ? (isDark ? 0.3 : 0.1) : 0,
-                        shadowRadius: 8,
-                        borderWidth: completed ? 3 : 2,
-                        borderColor: completed
-                          ? "#6BCF7F"
-                          : pressed && unlocked
-                          ? category.color[0]
-                          : "transparent",
-                      })}
+                    style={{
+                      backgroundColor: unlocked ? (isDark ? "#1a1a1a" : "#ffffff") : "transparent",
+                      borderRadius: 20,
+                      borderCurve: "continuous",
+                      padding: 20,
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      shadowColor: "#000",
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: unlocked ? (isDark ? 0.3 : 0.1) : 0,
+                      shadowRadius: 8,
+                      borderWidth: completed ? 3 : 2,
+                      borderColor: completed
+                        ? "#6BCF7F"
+                        : "transparent",
+                    }}
+                  >
                     >
                       <View style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
                         <View
@@ -323,7 +320,7 @@ export default function IndexRoute() {
                         </View>
                       )}
                       </View>
-                    </Pressable>
+                    </View>
                 );
 
                 return unlocked ? (
@@ -335,7 +332,9 @@ export default function IndexRoute() {
                     }}
                     asChild
                   >
-                    {content}
+                    <Pressable style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}>
+                      {content}
+                    </Pressable>
                   </Link>
                 ) : (
                   content
