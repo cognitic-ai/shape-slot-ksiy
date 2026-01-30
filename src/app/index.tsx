@@ -2,6 +2,10 @@ import { View, Text, Pressable, ScrollView } from "react-native";
 import { Link } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColorScheme } from "react-native";
+import { useEffect, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect } from "expo-router";
+import { useCallback } from "react";
 
 function generateLevels() {
   const levels = [];
@@ -10,19 +14,19 @@ function generateLevels() {
     let shapes = 0;
 
     if (i <= 10) {
-      category = "Beginner";
+      category = "Tiny Treasures";
       shapes = 2 + i;
     } else if (i <= 25) {
-      category = "Easy";
+      category = "Cozy Corner";
       shapes = 12 + Math.floor((i - 10) * 0.8);
     } else if (i <= 50) {
-      category = "Medium";
+      category = "Neat Freak";
       shapes = 24 + Math.floor((i - 25) * 0.6);
     } else if (i <= 75) {
-      category = "Hard";
+      category = "Order Master";
       shapes = 39 + Math.floor((i - 50) * 0.5);
     } else {
-      category = "Expert";
+      category = "Zen Legend";
       shapes = 52 + Math.floor((i - 75) * 0.4);
     }
 
@@ -33,40 +37,60 @@ function generateLevels() {
 
 const LEVELS = generateLevels();
 
-const CATEGORY_COLORS = {
-  Beginner: { light: "#6BCF7F", dark: "#5AB56E", bg: "#E8F8ED" },
-  Easy: "#89CFF0",
-  Medium: "#FFD93D",
-  Hard: "#FFA07A",
-  Expert: "#FF6B9D",
-};
-
 const CATEGORY_GRADIENTS = {
-  Beginner: ["#6BCF7F", "#98D8C8"],
-  Easy: ["#89CFF0", "#A8E6CF"],
-  Medium: ["#FFD93D", "#F8B195"],
-  Hard: ["#FFA07A", "#FF8B94"],
-  Expert: ["#FF6B9D", "#B4A7D6"],
+  "Tiny Treasures": ["#6BCF7F", "#98D8C8"],
+  "Cozy Corner": ["#89CFF0", "#A8E6CF"],
+  "Neat Freak": ["#FFD93D", "#F8B195"],
+  "Order Master": ["#FFA07A", "#FF8B94"],
+  "Zen Legend": ["#FF6B9D", "#B4A7D6"],
 };
 
 export default function IndexRoute() {
   const insets = useSafeAreaInsets();
   const scheme = useColorScheme();
   const isDark = scheme === "dark";
+  const [completedLevels, setCompletedLevels] = useState<Set<number>>(new Set());
+
+  const loadCompletedLevels = async () => {
+    try {
+      const saved = await AsyncStorage.getItem("completedLevels");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        setCompletedLevels(new Set(parsed));
+      }
+    } catch (error) {
+      console.log("Error loading completed levels:", error);
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      loadCompletedLevels();
+    }, [])
+  );
+
+  const isLevelUnlocked = (level: number) => {
+    if (level === 1) return true;
+    return completedLevels.has(level - 1);
+  };
+
+  const isLevelCompleted = (level: number) => {
+    return completedLevels.has(level);
+  };
 
   // Group levels by category
-  const beginnerLevels = LEVELS.filter((l) => l.category === "Beginner");
-  const easyLevels = LEVELS.filter((l) => l.category === "Easy");
-  const mediumLevels = LEVELS.filter((l) => l.category === "Medium");
-  const hardLevels = LEVELS.filter((l) => l.category === "Hard");
-  const expertLevels = LEVELS.filter((l) => l.category === "Expert");
+  const tinyLevels = LEVELS.filter((l) => l.category === "Tiny Treasures");
+  const cozyLevels = LEVELS.filter((l) => l.category === "Cozy Corner");
+  const neatLevels = LEVELS.filter((l) => l.category === "Neat Freak");
+  const orderLevels = LEVELS.filter((l) => l.category === "Order Master");
+  const zenLevels = LEVELS.filter((l) => l.category === "Zen Legend");
 
   const categories = [
-    { name: "Beginner", levels: beginnerLevels, color: CATEGORY_GRADIENTS.Beginner },
-    { name: "Easy", levels: easyLevels, color: CATEGORY_GRADIENTS.Easy },
-    { name: "Medium", levels: mediumLevels, color: CATEGORY_GRADIENTS.Medium },
-    { name: "Hard", levels: hardLevels, color: CATEGORY_GRADIENTS.Hard },
-    { name: "Expert", levels: expertLevels, color: CATEGORY_GRADIENTS.Expert },
+    { name: "Tiny Treasures", levels: tinyLevels, color: CATEGORY_GRADIENTS["Tiny Treasures"] },
+    { name: "Cozy Corner", levels: cozyLevels, color: CATEGORY_GRADIENTS["Cozy Corner"] },
+    { name: "Neat Freak", levels: neatLevels, color: CATEGORY_GRADIENTS["Neat Freak"] },
+    { name: "Order Master", levels: orderLevels, color: CATEGORY_GRADIENTS["Order Master"] },
+    { name: "Zen Legend", levels: zenLevels, color: CATEGORY_GRADIENTS["Zen Legend"] },
   ];
 
   return (
@@ -119,7 +143,7 @@ export default function IndexRoute() {
               fontVariant: ["tabular-nums"],
             }}
           >
-            100 levels of zen
+            {completedLevels.size}/100 levels completed
           </Text>
         </View>
 
@@ -174,56 +198,95 @@ export default function IndexRoute() {
                 gap: 10,
               }}
             >
-              {category.levels.map((levelData) => (
-                <Link
-                  key={levelData.level}
-                  href={{
-                    pathname: "/game",
-                    params: { level: levelData.level },
-                  }}
-                  asChild
-                >
-                  <Pressable
-                    style={({ pressed }) => ({
-                      width: "18%",
-                      aspectRatio: 1,
-                      backgroundColor: isDark ? "#1a1a1a" : "#ffffff",
-                      borderRadius: 16,
-                      borderCurve: "continuous",
-                      justifyContent: "center",
-                      alignItems: "center",
-                      opacity: pressed ? 0.6 : 1,
-                      shadowColor: "#000",
-                      shadowOffset: { width: 0, height: 2 },
-                      shadowOpacity: isDark ? 0.3 : 0.08,
-                      shadowRadius: 4,
-                      borderWidth: 2,
-                      borderColor: pressed ? category.color[0] : "transparent",
-                    })}
+              {category.levels.map((levelData) => {
+                const unlocked = isLevelUnlocked(levelData.level);
+                const completed = isLevelCompleted(levelData.level);
+
+                return (
+                  <Link
+                    key={levelData.level}
+                    href={{
+                      pathname: "/game",
+                      params: { level: levelData.level },
+                    }}
+                    asChild
+                    disabled={!unlocked}
                   >
-                    <Text
-                      style={{
-                        fontSize: 18,
-                        fontWeight: "700",
-                        color: category.color[0],
-                        fontVariant: ["tabular-nums"],
-                      }}
+                    <Pressable
+                      disabled={!unlocked}
+                      style={({ pressed }) => ({
+                        width: "18%",
+                        aspectRatio: 1,
+                        backgroundColor: unlocked
+                          ? isDark
+                            ? "#1a1a1a"
+                            : "#ffffff"
+                          : isDark
+                          ? "#0f0f0f"
+                          : "#f0f0f0",
+                        borderRadius: 16,
+                        borderCurve: "continuous",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        opacity: unlocked ? (pressed ? 0.6 : 1) : 0.4,
+                        shadowColor: "#000",
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: unlocked ? (isDark ? 0.3 : 0.08) : 0,
+                        shadowRadius: 4,
+                        borderWidth: 2,
+                        borderColor: completed
+                          ? category.color[0]
+                          : pressed && unlocked
+                          ? category.color[0]
+                          : "transparent",
+                        position: "relative",
+                      })}
                     >
-                      {levelData.level}
-                    </Text>
-                    <Text
-                      style={{
-                        fontSize: 10,
-                        color: isDark ? "#808080" : "#888888",
-                        marginTop: 2,
-                        fontVariant: ["tabular-nums"],
-                      }}
-                    >
-                      {levelData.shapes}
-                    </Text>
-                  </Pressable>
-                </Link>
-              ))}
+                      {completed && (
+                        <View
+                          style={{
+                            position: "absolute",
+                            top: 4,
+                            right: 4,
+                            backgroundColor: category.color[0],
+                            borderRadius: 10,
+                            width: 20,
+                            height: 20,
+                            justifyContent: "center",
+                            alignItems: "center",
+                          }}
+                        >
+                          <Text style={{ color: "#ffffff", fontSize: 12, fontWeight: "700" }}>
+                            ✓
+                          </Text>
+                        </View>
+                      )}
+                      <Text
+                        style={{
+                          fontSize: 18,
+                          fontWeight: "700",
+                          color: unlocked ? category.color[0] : isDark ? "#404040" : "#c0c0c0",
+                          fontVariant: ["tabular-nums"],
+                        }}
+                      >
+                        {unlocked ? levelData.level : "🔒"}
+                      </Text>
+                      {unlocked && (
+                        <Text
+                          style={{
+                            fontSize: 10,
+                            color: isDark ? "#808080" : "#888888",
+                            marginTop: 2,
+                            fontVariant: ["tabular-nums"],
+                          }}
+                        >
+                          {levelData.shapes}
+                        </Text>
+                      )}
+                    </Pressable>
+                  </Link>
+                );
+              })}
             </View>
           </View>
         ))}

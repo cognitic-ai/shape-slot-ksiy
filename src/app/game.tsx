@@ -13,6 +13,8 @@ import Animated, {
 } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import { Audio } from "expo-av";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import ConfettiCannon from "react-native-confetti-cannon";
 
 type ShapeType = "circle" | "rectangle" | "hexagon" | "triangle" | "diamond" | "star" | "pentagon" | "octagon";
 
@@ -277,6 +279,7 @@ export default function GameRoute() {
   const [completedCount, setCompletedCount] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
   const soundRef = useRef<Audio.Sound | null>(null);
+  const confettiRef = useRef<any>(null);
 
   useEffect(() => {
     const gameHeight = height - insets.top - insets.bottom - 100;
@@ -302,8 +305,26 @@ export default function GameRoute() {
     if (placedCount === shapes.length && shapes.length > 0 && !isComplete) {
       setIsComplete(true);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      saveCompletedLevel(parseInt(level || "1"));
+      // Trigger confetti
+      if (confettiRef.current) {
+        confettiRef.current.start();
+      }
     }
   }, [shapes, isComplete]);
+
+  const saveCompletedLevel = async (levelNum: number) => {
+    try {
+      const saved = await AsyncStorage.getItem("completedLevels");
+      const completedLevels = saved ? JSON.parse(saved) : [];
+      if (!completedLevels.includes(levelNum)) {
+        completedLevels.push(levelNum);
+        await AsyncStorage.setItem("completedLevels", JSON.stringify(completedLevels));
+      }
+    } catch (error) {
+      console.log("Error saving completed level:", error);
+    }
+  };
 
   const loadSound = async () => {
     try {
@@ -478,6 +499,17 @@ export default function GameRoute() {
             />
           ))}
         </View>
+
+        {/* Confetti */}
+        <ConfettiCannon
+          ref={confettiRef}
+          count={150}
+          origin={{ x: width / 2, y: -10 }}
+          autoStart={false}
+          fadeOut={true}
+          fallSpeed={2500}
+          colors={["#6BCF7F", "#89CFF0", "#FFD93D", "#FFA07A", "#FF6B9D", "#B4A7D6", "#98D8C8"]}
+        />
 
         {/* Completion Modal */}
         {isComplete && (
