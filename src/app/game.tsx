@@ -138,7 +138,7 @@ function ShapeComponent({
   }, [shape.currentX, shape.currentY]);
 
   const gesture = Gesture.Pan()
-    .enabled(!isGameComplete)
+    .enabled(!isGameComplete && !shape.isPlaced)
     .onStart(() => {
       'worklet';
       offsetX.value = translateX.value;
