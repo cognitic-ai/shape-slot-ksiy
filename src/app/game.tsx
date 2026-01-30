@@ -12,7 +12,6 @@ import Animated, {
   runOnJS,
 } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
-import { Audio } from "expo-av";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import ConfettiCannon from "react-native-confetti-cannon";
 
@@ -278,7 +277,6 @@ export default function GameRoute() {
   const [draggedShapeId, setDraggedShapeId] = useState<string | null>(null);
   const [completedCount, setCompletedCount] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
-  const soundRef = useRef<Audio.Sound | null>(null);
   const confettiRef = useRef<any>(null);
 
   useEffect(() => {
@@ -287,15 +285,6 @@ export default function GameRoute() {
     setShapes(initialShapes);
     setIsComplete(false);
     setCompletedCount(0);
-
-    // Load sound
-    loadSound();
-
-    return () => {
-      if (soundRef.current) {
-        soundRef.current.unloadAsync();
-      }
-    };
   }, [level, width, height]);
 
   useEffect(() => {
@@ -326,26 +315,8 @@ export default function GameRoute() {
     }
   };
 
-  const loadSound = async () => {
-    try {
-      const { sound } = await Audio.Sound.createAsync(
-        { uri: "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=" },
-        { shouldPlay: false }
-      );
-      soundRef.current = sound;
-    } catch (error) {
-      console.log("Sound loading error:", error);
-    }
-  };
-
   const playSound = async () => {
-    try {
-      if (soundRef.current) {
-        await soundRef.current.replayAsync();
-      }
-    } catch (error) {
-      console.log("Sound play error:", error);
-    }
+    // Sound removed due to module compatibility - haptic feedback provides tactile response
   };
 
   const handlePositionUpdate = (id: string, x: number, y: number) => {
