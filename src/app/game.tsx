@@ -116,6 +116,7 @@ function ShapeComponent({
   onDragStart,
   allShapes,
   zIndex,
+  isGameComplete,
 }: {
   shape: Shape;
   onPositionUpdate: (id: string, x: number, y: number) => void;
@@ -123,6 +124,7 @@ function ShapeComponent({
   onDragStart: (id: string) => void;
   allShapes: Shape[];
   zIndex: number;
+  isGameComplete: boolean;
 }) {
   const translateX = useSharedValue(shape.currentX);
   const translateY = useSharedValue(shape.currentY);
@@ -136,6 +138,7 @@ function ShapeComponent({
   }, [shape.currentX, shape.currentY]);
 
   const gesture = Gesture.Pan()
+    .enabled(!isGameComplete)
     .onStart(() => {
       offsetX.value = translateX.value;
       offsetY.value = translateY.value;
@@ -303,7 +306,7 @@ export default function GameRoute() {
       // Show modal after a delay to let confetti play
       setTimeout(() => {
         setShowModal(true);
-      }, 1500);
+      }, 800);
     }
   }, [shapes, isComplete]);
 
@@ -473,6 +476,7 @@ export default function GameRoute() {
               onDragStart={handleDragStart}
               allShapes={shapes}
               zIndex={draggedShapeId === shape.id ? 1000 : index}
+              isGameComplete={isComplete}
             />
           ))}
         </View>
@@ -484,7 +488,7 @@ export default function GameRoute() {
           origin={{ x: width / 2, y: -10 }}
           autoStart={false}
           fadeOut={true}
-          fallSpeed={2500}
+          fallSpeed={3500}
           colors={["#6BCF7F", "#89CFF0", "#FFD93D", "#FFA07A", "#FF6B9D", "#B4A7D6", "#98D8C8"]}
         />
 
@@ -545,7 +549,7 @@ export default function GameRoute() {
                       color: isDark ? "#ffffff" : "#1a1a1a",
                     }}
                   >
-                    Home
+                    All Levels
                   </Text>
                 </Pressable>
                 <Pressable
